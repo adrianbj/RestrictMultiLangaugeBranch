@@ -24,11 +24,11 @@ class RestrictMultiLanguageBranch extends WireData implements Module, Configurab
 			'summary' => 'Restrict multi-language by branch.',
             'author' => 'Adrian Jones',
 			'href' => '',
-			'version' => 1,
+			'version' => 2,
 			'permanent' => false,
 			'autoload' => true,
 			'singular' => true,
-            'icon' => 'key'
+            'icon' => 'language'
 		);
 	}
 
