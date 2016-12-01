@@ -24,7 +24,7 @@ class RestrictMultiLanguageBranch extends WireData implements Module, Configurab
 			'summary' => 'Restrict multi-language by branch.',
             'author' => 'Adrian Jones',
 			'href' => '',
-			'version' => 2,
+			'version' => 3,
 			'permanent' => false,
 			'autoload' => true,
 			'singular' => true,
@@ -182,6 +182,7 @@ class RestrictMultiLanguageBranch extends WireData implements Module, Configurab
         if($level > 0) return;
 
         $p = $event->object->getPage();
+        if($p->matches("has_parent={$this->config->adminRootPageID}|{$this->config->trashPageID}")) return;
 
         $options = array(
             "pid" => $p->id,
