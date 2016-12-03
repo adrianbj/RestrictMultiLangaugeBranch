@@ -23,8 +23,8 @@ class RestrictMultiLanguageBranch extends WireData implements Module, Configurab
 			'title' => 'Restrict Multi-Language Branch',
 			'summary' => 'Restrict multi-language by branch.',
             'author' => 'Adrian Jones',
-			'href' => '',
-			'version' => 3,
+			'href' => 'https://processwire.com/talk/topic/14891-restrict-multi-language-branch/',
+			'version' => 4,
 			'permanent' => false,
 			'autoload' => true,
 			'singular' => true,
@@ -118,7 +118,7 @@ class RestrictMultiLanguageBranch extends WireData implements Module, Configurab
         }
         // if no match, then use default from config settings
         else {
-            $p->template->noLang = $this->data['multilanguageDefaultStatus'];
+            $p->template->noLang = $this->data['multilanguageDefaultStatus'] == 'disabled' ? '1' : '0';
         }
     }
 
