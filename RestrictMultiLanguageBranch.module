@@ -24,7 +24,7 @@ class RestrictMultiLanguageBranch extends WireData implements Module, Configurab
 			'summary' => 'Restrict multi-language by branch.',
             'author' => 'Adrian Jones',
 			'href' => 'https://processwire.com/talk/topic/14891-restrict-multi-language-branch/',
-			'version' => 4,
+			'version' => 5,
 			'permanent' => false,
 			'autoload' => true,
 			'singular' => true,
@@ -81,7 +81,7 @@ class RestrictMultiLanguageBranch extends WireData implements Module, Configurab
             $this->addHookAfter('ProcessPageEdit::processInput', $this, 'processMultilanguageStatusForm');
         }
 
-        if(empty($this->data['multilanguageStatus'])) return; // no page restrictions defined so can exit now
+        if(empty($this->data['multilanguageStatus']) && $this->data['multilanguageDefaultStatus'] != 'disabled') return; // no page restrictions defined so can exit now
 
         // if we get this far then add hook on page edit to apply status restrictions
         $this->addHookBefore('ProcessPageEdit::execute', $this, 'multilanguageStatusCheck');
