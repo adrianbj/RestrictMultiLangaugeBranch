@@ -1,9 +1,8 @@
-Restrict Multi-language Branch
-================
+# Restrict Multi-language Branch
 
 ProcessWire module to restrict multi-language by branch.
 
-####Support forum:
+#### Support forum:
 https://processwire.com/talk/topic/14891-restrict-multi-language-branch/
 
 ## License

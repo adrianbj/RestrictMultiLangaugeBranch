@@ -24,7 +24,7 @@ class RestrictMultiLanguageBranch extends WireData implements Module, Configurab
 			'summary' => 'Restrict multi-language by branch.',
             'author' => 'Adrian Jones',
 			'href' => 'https://processwire.com/talk/topic/14891-restrict-multi-language-branch/',
-			'version' => 6,
+			'version' => '0.1.0',
 			'permanent' => false,
             'autoload' => "template=admin",
 			'singular' => true,
@@ -75,8 +75,8 @@ class RestrictMultiLanguageBranch extends WireData implements Module, Configurab
 	 */
 	public function init() {
 
-        if($this->user->isSuperuser()) {
-            $this->config->styles->add($this->config->urls->RestrictMultiLanguageBranch . "RestrictMultiLanguageBranch.css");
+        if($this->wire('user')->isSuperuser()) {
+            $this->wire('config')->styles->add($this->wire('config')->urls->RestrictMultiLanguageBranch . "RestrictMultiLanguageBranch.css");
             $this->addHookAfter('ProcessPageEdit::buildFormSettings', $this, 'buildMultilanguageStatusForm');
             $this->addHookAfter('ProcessPageEdit::processInput', $this, 'processMultilanguageStatusForm');
         }
@@ -128,16 +128,16 @@ class RestrictMultiLanguageBranch extends WireData implements Module, Configurab
         $p = $event->object->getPage();
         $inputfields = $event->return;
 
-        $fieldset = $this->modules->get("InputfieldFieldset");
+        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
         $fieldset->attr('id', 'multilanguage_fieldset');
         $fieldset->label = __("Multilanguage Restrictions");
 
         if($p->template->noLang !== 1) {
-            $f = wire('modules')->get("InputfieldRadios");
+            $f = $this->wire('modules')->get("InputfieldRadios");
             $f->attr('name', 'multilanguageStatus');
             $f->label = __('Multi-Language Status');
             $f->description = __("Should multi-language inputs be enabled or disabled for this page/branch?");
-            if($p->id === 1 || !isset($this->data['multilanguageStatus'][$this->closestSpecifiedParent->id])) {
+            if($p->id === 1 || !$this->closestSpecifiedParent || !isset($this->data['multilanguageStatus'][$this->closestSpecifiedParent->id])) {
                 $inherited = ' "'.$this->data['multilanguageDefaultStatus'].'" status from the module config settings.';
                 $f->addOption('inherit', 'Inherit' . $inherited);
             }
@@ -152,7 +152,7 @@ class RestrictMultiLanguageBranch extends WireData implements Module, Configurab
             $f->value = isset($this->data['multilanguageStatus']) && array_key_exists($p->id, $this->data['multilanguageStatus']) ? $this->data['multilanguageStatus'][$p->id]['status'] : 'inherit';
             $fieldset->add($f);
 
-            $f = wire('modules')->get('InputfieldCheckbox');
+            $f = $this->wire('modules')->get('InputfieldCheckbox');
             $f->attr('name', 'onlyThisPage');
             $f->label = 'Only this page';
             $f->description = __("Check to prevent enabled/disabled setting above from being inherited by all children/grandchildren of this page.");
@@ -162,7 +162,7 @@ class RestrictMultiLanguageBranch extends WireData implements Module, Configurab
             $fieldset->append($f);
         }
         else {
-            $f = wire('modules')->get("InputfieldMarkup");
+            $f = $this->wire('modules')->get("InputfieldMarkup");
             $f->attr('name', 'templateDisabled');
             $f->label = __('Language Branch Restrictions');
             $f->attr('value', "The template for this page has disabled multi-language support, so we don't want to override here.");
@@ -182,12 +182,12 @@ class RestrictMultiLanguageBranch extends WireData implements Module, Configurab
         if($level > 0) return;
 
         $p = $event->object->getPage();
-        if($p->matches("has_parent={$this->config->adminRootPageID}|{$this->config->trashPageID}")) return;
+        if($p->matches("has_parent={$this->wire('config')->adminRootPageID}|{$this->wire('config')->trashPageID}")) return;
 
         $options = array(
             "pid" => $p->id,
-            "multilanguageStatus" => $this->input->post->multilanguageStatus,
-            "onlyThisPage" => $this->input->post->onlyThisPage
+            "multilanguageStatus" => $this->wire('input')->post->multilanguageStatus,
+            "onlyThisPage" => $this->wire('input')->post->onlyThisPage
         );
 
         $options = array_merge($this->multilanguageRestrictOptions, $options);
@@ -200,13 +200,13 @@ class RestrictMultiLanguageBranch extends WireData implements Module, Configurab
         unset($this->data['multilanguageStatus'][$pid]); // remove existing record for this page - need a clear slate for adding new settings or if it was just disabled
 
         // if inherit then we don't want to save - just a waste of space in the module settings
-        if($this->input->post->multilanguageStatus !== 'inherit') {
+        if($this->wire('input')->post->multilanguageStatus !== 'inherit') {
             $this->data['multilanguageStatus'][$pid]['status'] = $options['multilanguageStatus'];
             $this->data['multilanguageStatus'][$pid]['onlyThisPage'] = $options['onlyThisPage'];
         }
 
         // save to config data with the rest of the settings
-        $this->modules->saveModuleConfigData($this->modules->get("RestrictMultiLanguageBranch"), $this->data);
+        $this->wire('modules')->saveModuleConfigData($this->wire('modules')->get("RestrictMultiLanguageBranch"), $this->data);
     }
 
     /**
@@ -216,13 +216,13 @@ class RestrictMultiLanguageBranch extends WireData implements Module, Configurab
      * @return InputfieldsWrapper
      *
      */
-    public static function getModuleConfigInputfields(array $data) {
+    public function getModuleConfigInputfields(array $data) {
 
         $data = array_merge(self::getDefaultData(), $data);
 
         $wrapper = new InputfieldWrapper();
 
-        $f = wire('modules')->get("InputfieldMarkup");
+        $f = $this->wire('modules')->get("InputfieldMarkup");
         $f->attr('name', 'table');
         $f->label = __('Language Branch Restrictions');
         $value = '';
@@ -236,7 +236,7 @@ class RestrictMultiLanguageBranch extends WireData implements Module, Configurab
         $f->notes = __("Children inherit restrictions from their parents unless 'This Page Only' is set to True.");
 
         if(isset($data['multilanguageStatus'])) {
-            $table = wire('modules')->get("MarkupAdminDataTable");
+            $table = $this->wire('modules')->get("MarkupAdminDataTable");
             $table->setEncodeEntities(false);
             $table->setSortable(false);
             $table->setClass('languagerestrictor');
@@ -249,11 +249,11 @@ class RestrictMultiLanguageBranch extends WireData implements Module, Configurab
             ));
             foreach($data['multilanguageStatus'] as $pid => $settings) {
                 $row = array(
-                    wire('pages')->get($pid)->title,
-                    wire('pages')->get($pid)->path,
+                    $this->wire('pages')->get($pid)->title,
+                    $this->wire('pages')->get($pid)->path,
                     ucfirst($settings['status']),
                     ($settings['onlyThisPage'] ? 'True' : 'False'),
-                    '<a href="'.wire('config')->urls->admin.'page/edit/?id='.$pid.'#ProcessPageEditSettings">edit</a>'
+                    '<a href="'.$this->wire('config')->urls->admin.'page/edit/?id='.$pid.'#ProcessPageEditSettings">edit</a>'
                 );
                 $table->row($row);
             }
@@ -262,7 +262,7 @@ class RestrictMultiLanguageBranch extends WireData implements Module, Configurab
         $f->attr('value', $value);
         $wrapper->add($f);
 
-        $f = wire('modules')->get("InputfieldRadios");
+        $f = $this->wire('modules')->get("InputfieldRadios");
         $f->attr('name', 'multilanguageDefaultStatus');
         $f->label = __('Multi-Language Default Status');
         $f->description = __("Should multi-language inputs be enabled or disabled by default for the entire page tree?");
