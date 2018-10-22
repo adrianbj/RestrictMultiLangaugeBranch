@@ -24,7 +24,7 @@ class RestrictMultiLanguageBranch extends WireData implements Module, Configurab
 			'summary' => 'Restrict multi-language by branch.',
             'author' => 'Adrian Jones',
 			'href' => 'https://processwire.com/talk/topic/14891-restrict-multi-language-branch/',
-			'version' => '0.1.0',
+			'version' => '0.1.1',
 			'permanent' => false,
             'autoload' => "template=admin",
 			'singular' => true,
@@ -90,7 +90,7 @@ class RestrictMultiLanguageBranch extends WireData implements Module, Configurab
 
 
     /**
-     * Checks if page is protected and show login form if necessary
+     * Checks if page should show multi-language inputs
      *
      * @param HookEvent $event
      */
@@ -114,7 +114,17 @@ class RestrictMultiLanguageBranch extends WireData implements Module, Configurab
 
         // if there's a match, set the noLang value for the page's template appropriately
         if(isset($this->data['multilanguageStatus'][$this->closestMatch->id])) {
-            $p->template->noLang = ($this->data['multilanguageStatus'][$this->closestMatch->id]['status'] == 'disabled') ? '1' : '0';
+            if($this->data['multilanguageStatus'][$this->closestMatch->id]['status'] == 'disabled') {
+                $p->template->noLang = '1';
+                // we want repeater fields single language as well
+                foreach($p->fields as $f) {
+                    if($f->type instanceof FieldtypeRepeater === false) continue;
+                    $this->wire('templates')->get(FieldtypeRepeater::templateNamePrefix . $f->name)->noLang = '1';
+                }
+            }
+            else {
+                $p->template->noLang = '0';
+            }
         }
         // if no match, then use default from config settings
         else {
