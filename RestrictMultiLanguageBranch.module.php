@@ -24,7 +24,7 @@ class RestrictMultiLanguageBranch extends WireData implements Module, Configurab
 			'summary' => 'Restrict multi-language by branch.',
             'author' => 'Adrian Jones',
 			'href' => 'https://processwire.com/talk/topic/14891-restrict-multi-language-branch/',
-			'version' => '0.1.1',
+			'version' => '0.1.2',
 			'permanent' => false,
             'autoload' => "template=admin",
 			'singular' => true,
@@ -201,7 +201,21 @@ class RestrictMultiLanguageBranch extends WireData implements Module, Configurab
         );
 
         $options = array_merge($this->multilanguageRestrictOptions, $options);
-        $this->saveSettings($options);
+
+        // create array of options and modify keys so it can be compared to existing settings for this page
+        // if they don't match existing settings, or no settings exist, then save settings
+        $optionsToCompare = $options;
+        unset($optionsToCompare['pid']);
+        $optionsToCompare['status'] = $options['multilanguageStatus'];
+        unset($optionsToCompare['multilanguageStatus']);
+
+        if(
+            (isset($this->data['multilanguageStatus'][$p->id]) && $this->data['multilanguageStatus'][$p->id] != $optionsToCompare) ||
+            (!isset($this->data['multilanguageStatus'][$p->id]) && $optionsToCompare['status'] != 'inherit')
+        ) {
+            $this->saveSettings($options);
+        }
+
     }
 
 
@@ -216,7 +230,7 @@ class RestrictMultiLanguageBranch extends WireData implements Module, Configurab
         }
 
         // save to config data with the rest of the settings
-        $this->wire('modules')->saveModuleConfigData($this->wire('modules')->get("RestrictMultiLanguageBranch"), $this->data);
+        $this->wire('modules')->saveModuleConfigData($this, $this->data);
     }
 
     /**
@@ -237,7 +251,7 @@ class RestrictMultiLanguageBranch extends WireData implements Module, Configurab
         $f->label = __('Language Branch Restrictions');
         $value = '';
         if(empty($data['multilanguageStatus'])) {
-            $value .= "<h3 style='color:#990000'>Currently no pages have language restrictions.</h2><h3 style='color:#990000'>To set language restrictions, you need to configure on each page's Settings tab.</h3>";
+            $value .= "<h3 style='color:#990000'>Currently no pages have language restrictions.<br />To set language restrictions, you need to configure on each page's Settings tab.</h3>";
         }
         else{
             $value .= "<h3 style='color:#009900'>Currently there " . (count($data['multilanguageStatus']) >1 ? " are " : " is ") . count($data['multilanguageStatus'])." page" . (count($data['multilanguageStatus']) >1 ? "s" : "") . " with a specified language restriction status.</h3>";
